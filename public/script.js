@@ -108,7 +108,7 @@ const generateResponse = async (botMsgDiv) => {
             <dotlottie-player 
                 src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
                 background="transparent" 
-                speed="2" 
+                speed="1" 
                 style="width: 50px; height: 50px; margin-right: 10px;" 
                 loop autoplay></dotlottie-player>
             <p class="message-text">${responseText}</p>
@@ -119,13 +119,14 @@ const generateResponse = async (botMsgDiv) => {
     } catch (error) {
         textElement.textContent = error.message;
         textElement.style.color = "#d62939";
-        botMsgDiv.classList.remove("loading");
-        document.body.classList.remove("bot-responding");
-        scrollToBottom();
     } finally {
+        document.body.classList.remove("bot-responding"); // ✅ Enable new message input
+        botMsgDiv.classList.remove("loading"); // ✅ Ensure message is fully displayed
         userData.file = {};
+        scrollToBottom();
     }
 };
+
 
 
 const customResponses = {
@@ -141,7 +142,7 @@ const handleFormSubmit = (e) => {
 
     userData.message = userMessage;
     promptInput.value = "";
-    document.body.classList.add("chats-active", "bot-responding");
+    document.body.classList.add("chats-active", "bot-responding"); // ✅ Prevent multiple submits while responding
 
     fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
 
@@ -152,12 +153,11 @@ const handleFormSubmit = (e) => {
     scrollToBottom();
 
     setTimeout(() => {
-        // Display bot "thinking" animation
         const botMsgDiv = createMessageElement(`
             <dotlottie-player 
                 src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
                 background="transparent" 
-                speed="2" 
+                speed="1" 
                 style="width: 50px; height: 50px; margin-right: 10px;" 
                 loop autoplay></dotlottie-player>
             <p class="message-text">Just a sec...</p>
@@ -165,9 +165,18 @@ const handleFormSubmit = (e) => {
 
         chatsContainer.appendChild(botMsgDiv);
         scrollToBottom();
+
         generateResponse(botMsgDiv);
     }, 600);
 };
+
+// ✅ Reset UI after bot response
+document.querySelector("#stop-response-btn").addEventListener("click", () => {
+    controller?.abort();
+    document.body.classList.remove("bot-responding"); // ✅ Allow new messages
+    chatsContainer.querySelector(".bot-message.loading")?.classList.remove("loading");
+});
+
 
 
 // Attach event listeners
