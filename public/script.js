@@ -10,6 +10,7 @@ const modelDropdown = document.querySelector(".model-dropdown");
 const modelDropdownBtn = document.getElementById("model-dropdown-btn");
 const modelOptions = document.querySelectorAll(".model-option");
 const modelInfo = document.getElementById("model-info");
+
 // Model descriptions
 const modelDescriptions = {
     "gemini-1.5-flash": "Gemini 1.5 Flash is a fast and versatile multimodal model for scaling across diverse tasks.",
@@ -299,6 +300,96 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.target === popup) {
             popup.style.display = "none";
             localStorage.setItem("popupShown", "true");
+        }
+    });
+
+    const infoPopup = document.getElementById("info-popup");
+    const changelogPopup = document.getElementById("changelog-popup");
+    const changelogContainer = document.getElementById("changelog-container");
+    const openChangelogBtn = document.getElementById("open-changelog");
+    const closeChangelogBtn = document.getElementById("close-changelog-btn");
+
+    let changelogLoaded = false;
+    let changelogContent = ""; // ✅ Store loaded changelog content
+
+    // ✅ Prevent double scrollbars by stopping body scroll when popup is open
+    function toggleBodyScroll(disable) {
+        document.body.classList.toggle("no-scroll", disable);
+    }
+
+    // ✅ Show info popup only on first visit
+    if (!localStorage.getItem("popupShown")) {
+        infoPopup.style.display = "flex";
+    }
+
+    closePopup?.addEventListener("click", () => {
+        infoPopup.style.display = "none";
+        localStorage.setItem("popupShown", "true");
+
+        // ✅ Show Changelog Popup After Closing Info Popup
+        setTimeout(() => {
+            openChangelogPopup();
+        }, 500);
+    });
+
+    // ✅ Function to Load Changelog from JSON Once
+    async function loadChangelog() {
+        if (changelogLoaded) return; // Prevent duplicate loads
+        try {
+            const response = await fetch("changelog.json");
+            if (!response.ok) throw new Error("Failed to fetch changelog.");
+            const data = await response.json();
+
+            // ✅ Format changelog from JSON
+            changelogContent = formatChangelog(data); // ✅ Store formatted content
+            changelogContainer.innerHTML = changelogContent;
+            changelogLoaded = true; // ✅ Mark as loaded
+        } catch (error) {
+            changelogContainer.innerHTML = "<p>Error loading changelog. Please try again.</p>";
+        }
+    }
+
+    function formatChangelog(data) {
+        let html = "<h2>Changelog</h2>";
+        data.versions.forEach(version => {
+            html += `
+                <p><strong>Version ${version.version}</strong> - (${version.date})</p>
+                <ul>
+                    ${version.changes.map(change => `<li>${change}</li>`).join("")}
+                </ul>
+            `;
+        });
+        return html;
+    }
+
+    // ✅ Function to Open Changelog Popup Correctly
+    function openChangelogPopup() {
+        changelogPopup.style.display = "flex";
+        toggleBodyScroll(true); // ✅ Stop scrolling on main page
+        
+        if (changelogLoaded) {
+            changelogContainer.innerHTML = changelogContent; // ✅ Use stored content
+        } else {
+            changelogContainer.innerHTML = "<p>Loading changelog...</p>";
+            loadChangelog();
+        }
+    }
+
+    openChangelogBtn?.addEventListener("click", () => {
+        openChangelogPopup();
+    });
+
+    // ✅ Close Changelog Popup
+    closeChangelogBtn?.addEventListener("click", () => {
+        changelogPopup.style.display = "none";
+        toggleBodyScroll(false); // ✅ Enable scrolling again
+    });
+
+    // ✅ Close Popup When Clicking Outside
+    changelogPopup?.addEventListener("click", (event) => {
+        if (event.target === changelogPopup) {
+            changelogPopup.style.display = "none";
+            toggleBodyScroll(false);
         }
     });
 });
