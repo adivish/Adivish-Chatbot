@@ -349,24 +349,34 @@ body.bot-responding .prompt-form #stop-response-btn {
   justify-content: center;
   z-index: 9999;
   overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
 }
-
+.popup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
 /* Popup Content */
 .popup-content {
   background: var(--secondary-color);
   padding: 20px;
   border-radius: 10px;
   max-width: 500px;
-  max-height: 80vh; /* ✅ Prevents large popups */
+  max-height: 80vh;
   text-align: center;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   color: var(--text-color);
-  overflow-y: auto; /* ✅ Enables scrolling only if needed */
+  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-color) transparent;
+  transform: scale(0.9);
+  transition: transform 0.8s ease-in-out;
 }
 
-
+.popup-overlay.active .popup-content {
+  transform: scale(1);
+}
 /* Header and Paragraph Styling */
 .popup-content h2 {
   font-size: 1rem;
@@ -419,11 +429,12 @@ body.bot-responding .prompt-form #stop-response-btn {
   cursor: pointer;
   border-radius: 5px;
   margin-top: 15px;
-  transition: background 0.3s;
+  transition: background 0.3s ease-in-out, transform 0.2s ease-in-out
 }
 
 .popup-content button:hover {
   background: #0264e3;
+  transform: scale(1.05);
 }
 
 /* Responsive Design */
@@ -523,11 +534,31 @@ strong {
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 1000;;
 }
 
+.header-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 15px;
+  cursor: pointer;
+}
+/* ✅ User Authentication Buttons */
+#login-btn, #register-btn {
+  background: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+}
 
+#login-btn:hover, #register-btn:hover {
+  background: var(--secondary-hover-color);
+}
 /* Custom Model Dropdown */
 .model-dropdown {
   position: relative;

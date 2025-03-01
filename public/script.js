@@ -282,68 +282,44 @@ themeToggleBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Show popup only on first visit
-    const popup = document.getElementById("info-popup");
-    const closePopup = document.getElementById("close-popup");
-
-    if (!localStorage.getItem("popupShown")) {
-        popup.style.display = "flex"; // Show popup
-    }
-
-    closePopup.addEventListener("click", () => {
-        popup.style.display = "none"; // Hide popup when clicked
-        localStorage.setItem("popupShown", "true"); // Store in localStorage
-    });
-
-    // Prevent background scrolling when popup is open
-    popup.addEventListener("click", (event) => {
-        if (event.target === popup) {
-            popup.style.display = "none";
-            localStorage.setItem("popupShown", "true");
-        }
-    });
-
     const infoPopup = document.getElementById("info-popup");
     const changelogPopup = document.getElementById("changelog-popup");
     const changelogContainer = document.getElementById("changelog-container");
     const openChangelogBtn = document.getElementById("open-changelog");
     const closeChangelogBtn = document.getElementById("close-changelog-btn");
+    const closePopup = document.getElementById("close-popup");
 
     let changelogLoaded = false;
-    let changelogContent = ""; // ✅ Store loaded changelog content
+    let changelogContent = "";
 
-    // ✅ Prevent double scrollbars by stopping body scroll when popup is open
+    // ✅ Prevent scrolling when popups are open
     function toggleBodyScroll(disable) {
         document.body.classList.toggle("no-scroll", disable);
     }
 
-    // ✅ Show info popup only on first visit
-    if (!localStorage.getItem("popupShown")) {
-        infoPopup.style.display = "flex";
+    // ✅ Function to Open Any Popup
+    function openPopup(popup) {
+        popup.classList.add("active");
+        toggleBodyScroll(true);
     }
 
-    closePopup?.addEventListener("click", () => {
-        infoPopup.style.display = "none";
-        localStorage.setItem("popupShown", "true");
+    // ✅ Function to Close Any Popup
+    function closePopupHandler(popup) {
+        popup.classList.remove("active");
+        toggleBodyScroll(false);
+    }
 
-        // ✅ Show Changelog Popup After Closing Info Popup
-        setTimeout(() => {
-            openChangelogPopup();
-        }, 500);
-    });
-
-    // ✅ Function to Load Changelog from JSON Once
+    // ✅ Function to Load Changelog from JSON
     async function loadChangelog() {
-        if (changelogLoaded) return; // Prevent duplicate loads
+        if (changelogLoaded) return; // Prevent duplicate fetch calls
         try {
             const response = await fetch("changelog.json");
             if (!response.ok) throw new Error("Failed to fetch changelog.");
             const data = await response.json();
 
-            // ✅ Format changelog from JSON
-            changelogContent = formatChangelog(data); // ✅ Store formatted content
-            changelogContainer.innerHTML = changelogContent;
-            changelogLoaded = true; // ✅ Mark as loaded
+            changelogContent = formatChangelog(data);
+            changelogContainer.innerHTML = changelogContent; // ✅ Store content before showing popup
+            changelogLoaded = true;
         } catch (error) {
             changelogContainer.innerHTML = "<p>Error loading changelog. Please try again.</p>";
         }
@@ -362,11 +338,29 @@ document.addEventListener("DOMContentLoaded", () => {
         return html;
     }
 
-    // ✅ Function to Open Changelog Popup Correctly
+    // ✅ Show info popup only on first visit
+    if (!localStorage.getItem("popupShown")) {
+        setTimeout(() => {
+            openPopup(infoPopup);
+        }, 500);
+    }
+
+    closePopup?.addEventListener("click", async () => {
+        closePopupHandler(infoPopup);
+        localStorage.setItem("popupShown", "true");
+
+        // ✅ Preload changelog before opening popup
+        changelogContainer.innerHTML = "<p>Loading changelog...</p>";
+        await loadChangelog(); // ✅ Load before showing popup
+
+        setTimeout(() => {
+            openPopup(changelogPopup);
+        }, 500);
+    });
+
+    // ✅ Open Changelog Popup Correctly
     function openChangelogPopup() {
-        changelogPopup.style.display = "flex";
-        toggleBodyScroll(true); // ✅ Stop scrolling on main page
-        
+        openPopup(changelogPopup);
         if (changelogLoaded) {
             changelogContainer.innerHTML = changelogContent; // ✅ Use stored content
         } else {
@@ -379,18 +373,97 @@ document.addEventListener("DOMContentLoaded", () => {
         openChangelogPopup();
     });
 
-    // ✅ Close Changelog Popup
     closeChangelogBtn?.addEventListener("click", () => {
-        changelogPopup.style.display = "none";
-        toggleBodyScroll(false); // ✅ Enable scrolling again
+        closePopupHandler(changelogPopup);
     });
 
     // ✅ Close Popup When Clicking Outside
     changelogPopup?.addEventListener("click", (event) => {
         if (event.target === changelogPopup) {
-            changelogPopup.style.display = "none";
-            toggleBodyScroll(false);
+            closePopupHandler(changelogPopup);
         }
     });
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const loginBtn = document.getElementById("login-btn");
+    const registerBtn = document.getElementById("register-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const chatbotContainer = document.querySelector(".prompt-container");
+
+    // ✅ Check if user is logged in
+    function checkUserAuth() {
+        const token = localStorage.getItem("token");
+        if (token) {
+            loginBtn.style.display = "none";
+            registerBtn.style.display = "none";
+            logoutBtn.style.display = "block";
+            chatbotContainer.style.display = "block";
+        } else {
+            loginBtn.style.display = "block";
+            registerBtn.style.display = "block";
+            logoutBtn.style.display = "none";
+            chatbotContainer.style.display = "none"; // ✅ Hide chatbot for non-logged-in users
+        }
+    }
+
+    checkUserAuth();
+
+    // ✅ Handle Registration
+    registerBtn.addEventListener("click", async () => {
+        const email = prompt("Enter your email:");
+        const password = prompt("Enter your password:");
+
+        if (email && password) {
+            try {
+                const response = await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                alert(data.message || data.error);
+            } catch (error) {
+                console.error("Registration failed", error);
+            }
+        }
+    });
+
+    // ✅ Handle Login
+    loginBtn.addEventListener("click", async () => {
+        const email = prompt("Enter your email:");
+        const password = prompt("Enter your password:");
+
+        if (email && password) {
+            try {
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                if (data.token) {
+                    localStorage.setItem("token", data.token);
+                    alert("Login successful!");
+                    checkUserAuth();
+                } else {
+                    alert(data.error);
+                }
+            } catch (error) {
+                console.error("Login failed", error);
+            }
+        }
+    });
+
+    // ✅ Handle Logout
+    logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        alert("Logged out successfully!");
+        checkUserAuth();
+    });
+});
+
 
