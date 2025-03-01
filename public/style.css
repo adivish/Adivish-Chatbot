@@ -130,6 +130,11 @@ body.chats-active .container :where(.app-header, .suggestions) {
   gap: 20px;
   flex-direction: column;
 }
+.chats-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Aligns messages to the left */
+}
 .chats-container .message {
   display: flex;
   gap: 11px;
@@ -331,65 +336,300 @@ body.bot-responding .prompt-form #stop-response-btn {
   }
 }
 
-/* Popup Styles */
+/* Popup Overlay (Ensures it covers the screen) */
 .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
 }
 
+/* Popup Content */
 .popup-content {
-    background: var(--primary-color);
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 500px;
-    max-height: 500px;
-    
-    text-align: center;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    color: var(--text-color);
+  background: var(--secondary-color);
+  padding: 20px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  color: var(--text-color);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-color) transparent;
 }
 
+/* Header and Paragraph Styling */
 .popup-content h2 {
-    font-size: 1rem;
-    color: var(--text-color);
-    margin-bottom: 10px;
+  font-size: 1rem;
+  color: var(--text-color);
+  margin-bottom: 10px;
 }
 
 .popup-content p {
-    font-size: 0.8rem;
-    margin: 5px 0;
+  font-size: 0.7rem;
+  margin: 10px 0;
+  word-wrap: break-word;
 }
 
-.popup-content a {
-    color: #1d7efd;
-    text-decoration: none;
-    font-weight: bold;
+/* Social Links - Display Inline */
+.social-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px; /* Space between items */
+  margin: 10px 0;
 }
 
-.popup-content a:hover {
-    text-decoration: underline;
+.social-links p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
+/* Social Icons */
+.social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  transition: transform 0.3s;
+}
+
+.social-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Button Styling */
 .popup-content button {
-    background: #1d7efd;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    border-radius: 20px;
-    margin-top: 15px;
-    transition: background 0.3s;
+  background: #1d7efd;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 15px;
+  transition: background 0.3s;
 }
 
 .popup-content button:hover {
-    background: #0264e3;
+  background: #0264e3;
 }
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .popup-content {
+      width: 95%;
+      max-height: 85vh;
+  }
+  
+  .social-links {
+      flex-direction: column; /* Stack items vertically on small screens */
+  }
+}
+
+/* Code Block Styling */
+pre {
+  background: #1e1e1e;
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+
+code {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between elements */
+  margin-bottom: 12px;
+}
+.bot-message .message-text {
+  text-align: left;
+  word-wrap: break-word;
+  white-space: pre-line;
+  flex-grow: 1;
+}
+
+.message-text {
+  flex-grow: 1;
+  max-width: 80%;
+}
+.bot-message {
+  align-self: flex-start; /* Aligns bot messages to the left */
+  max-width: 75%; /* Prevents long messages from stretching too wide */
+  text-align: left; /* Ensures text aligns correctly */
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: var(--secondary-color);
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between Lottie animation and text */
+}
+
+
+
+.bot-message dotlottie-player {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+/* List Styling */
+ul, ol {
+  padding-left: 20px;
+  margin-bottom: 10px;
+}
+
+ul li, ol li {
+  margin-bottom: 5px;
+}
+
+/* Header Styling */
+strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  color: #1d7efd;
+}
+
+
+/* Fixed Header */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* background: var(--secondary-color); */
+  padding: 10px 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Custom Model Dropdown */
+.model-dropdown {
+  position: relative;
+  display: inline-block;
+  
+}
+
+#model-dropdown-btn {
+  background: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  padding: 8px 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+#model-dropdown-btn:hover {
+  background: var(--secondary-hover-color);
+}
+
+/* Dropdown Options */
+.model-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--secondary-color);
+  width: 100%;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  overflow: hidden;
+  z-index: 1001;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.model-option:hover {
+  background: var(--secondary-hover-color);
+}
+
+.model-option .model-icon {
+  font-size: 1.5rem;
+}
+
+.model-option .model-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.model-option p {
+  font-size: 0.85rem;
+  color: var(--subheading-color);
+  margin: 0;
+}
+
+/* Show Dropdown on Click */
+.model-dropdown.active .model-options {
+  display: block;
+}
+/* Checkmark for Selected Model */
+.checkmark {
+  margin-left: auto; /* Push to the right */
+  font-size: 1.2rem;
+  color: #1d7efd; /* Blue color */
+  display: none; /* Hidden by default */
+}
+
+/* Show checkmark only for the selected model */
+.model-option.selected .checkmark {
+  display: inline-block;
+}
+
+/* Model Info Text */
+.model-info {
+  font-size: 1rem;
+  color: var(--subheading-color);
+  text-align: center;
+  margin-top: 10px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+  background: var(--secondary-color);
+  border-radius: 15px;
+  margin-top: inherit;
+}
+
+

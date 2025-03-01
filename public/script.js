@@ -6,18 +6,59 @@ const fileInput = promptForm.querySelector("#file-input");
 const fileUploadWrapper = promptForm.querySelector(".file-upload-wrapper");
 const themeToggleBtn = document.querySelector("#theme-toggle-btn");
 
+const modelDropdown = document.querySelector(".model-dropdown");
+const modelDropdownBtn = document.getElementById("model-dropdown-btn");
+const modelOptions = document.querySelectorAll(".model-option");
+const modelInfo = document.getElementById("model-info");
+// Model descriptions
+const modelDescriptions = {
+    "gemini-1.5-flash": "Gemini 1.5 Flash is a fast and versatile multimodal model for scaling across diverse tasks.",
+    "gemini-2.0-flash": "Gemini 2.0 Flash delivers next-gen features and improved capabilities, including superior speed, native tool use, multimodal generation, and a 1M token context window."
+};
+let selectedModel = localStorage.getItem("selectedModel") || "gemini-1.5-flash";
+// Update button text on page load
+updateDropdownText(selectedModel);
+// Toggle dropdown visibility
+modelDropdownBtn.addEventListener("click", () => {
+    modelDropdown.classList.toggle("active");
+});
+// Handle model selection
+modelOptions.forEach(option => {
+    option.addEventListener("click", (event) => {
+        selectedModel = event.currentTarget.dataset.model;
+        localStorage.setItem("selectedModel", selectedModel); // Save to localStorage
+        updateDropdownText(selectedModel);
+        modelDropdown.classList.remove("active");
+        console.log(`Switched to model: ${selectedModel}`);
+    });
+});
+// Update dropdown button text based on selected model
+function updateDropdownText(model) {
+    let text = model === "gemini-1.5-flash" ? "Gemini 1.5 Flash" : "Gemini 2.0 Flash";
+    modelDropdownBtn.innerHTML = text + ' <svg xmlns="http://www.w3.org/2000/svg" height="35px" viewBox="0 -960 960 960" width="35px" fill="#e3e3e3"><path d="M480-360 280-559h400L480-360Z"/></svg>';
+    // Remove "selected" class from all options
+    modelOptions.forEach(option => option.classList.remove("selected"));
+
+    // Add "selected" class to the correct option
+    document.querySelector(`.model-option[data-model="${model}"]`).classList.add("selected");
+     // Update model description
+     modelInfo.textContent = modelDescriptions[model];
+}
+
 // Fetch API Key from backend before making requests
 let API_KEY = "";
 fetch("/api/config")
     .then(response => response.json())
     .then(data => {
         API_KEY = data.googleApiKey;
-       // console.log("API Key loaded successfully"); // Debugging
+        // console.log("API Key loaded successfully"); // Debugging
     })
     .catch(error => console.error("Error fetching API key:", error));
+const getApiUrl = () => {
+    return `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${API_KEY}`;
+}
+// Change model when user selects a different one
 
-// Function to dynamically construct API URL
-const getApiUrl = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
 let controller, typingInterval;
 const chatHistory = [];
@@ -103,18 +144,29 @@ const generateResponse = async (botMsgDiv) => {
         let responseText = data.candidates[0].content.parts[0].text.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
         responseText = responseFilter(responseText);
 
-        // Add Lottie Gemini logo before response text
+        // ✅ Apply structured formatting (headers, lists, code)
+        responseText = formatStructuredResponse(responseText);
+
+        // ✅ Wrap message properly
         botMsgDiv.innerHTML = `
-            <dotlottie-player 
-                src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
-                background="transparent" 
-                speed="1" 
-                style="width: 50px; height: 50px; margin-right: 10px;" 
-                loop autoplay></dotlottie-player>
-            <p class="message-text">${responseText}</p>
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <dotlottie-player 
+                    src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
+                    background="transparent" 
+                    speed="2.5" 
+                    style="width: 40px; height: 40px;" 
+                    loop autoplay>
+                </dotlottie-player>
+                <div style="max-width: 80%;">${responseText}</div>
+            </div>
         `;
 
         chatHistory.push({ role: "model", parts: [{ text: responseText }] });
+
+        // ✅ Highlight code blocks
+        document.querySelectorAll("pre code").forEach((block) => {
+            hljs.highlightElement(block);
+        });
 
     } catch (error) {
         textElement.textContent = error.message;
@@ -127,6 +179,42 @@ const generateResponse = async (botMsgDiv) => {
     }
 };
 
+
+
+
+const formatCodeBlocks = (text) => {
+    return text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+        return `<pre><code class="language-${language || 'plaintext'}">${escapeHtml(code)}</code></pre>`;
+    });
+};
+
+// Escape HTML to prevent UI issues
+const escapeHtml = (unsafe) => {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+
+const formatStructuredResponse = (text) => {
+    // Convert headers (`**Title**`) to <strong> tags
+    text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+    // Convert bullet points (`* item`) to proper lists
+    text = text.replace(/\n\* (.*?)\n/g, "<ul><li>$1</li></ul>");
+
+    // Convert numbered lists (`1. item`) to ordered lists
+    text = text.replace(/\n\d+\. (.*?)\n/g, "<ol><li>$1</li></ol>");
+
+    // Convert code blocks (` ```code``` `) to <pre><code> blocks
+    text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+        return `<pre><code class="language-${language || 'plaintext'}">${escapeHtml(code)}</code></pre>`;
+    });
+
+    return text;
+};
 
 
 const customResponses = {
@@ -142,7 +230,7 @@ const handleFormSubmit = (e) => {
 
     userData.message = userMessage;
     promptInput.value = "";
-    document.body.classList.add("chats-active", "bot-responding"); // ✅ Prevent multiple submits while responding
+    document.body.classList.add("chats-active", "bot-responding");
 
     fileUploadWrapper.classList.remove("file-attached", "img-attached", "active");
 
@@ -153,14 +241,18 @@ const handleFormSubmit = (e) => {
     scrollToBottom();
 
     setTimeout(() => {
+        // ✅ Ensure "Just a sec..." is left-aligned
         const botMsgDiv = createMessageElement(`
-            <dotlottie-player 
-                src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
-                background="transparent" 
-                speed="1" 
-                style="width: 50px; height: 50px; margin-right: 10px;" 
-                loop autoplay></dotlottie-player>
-            <p class="message-text">Just a sec...</p>
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <dotlottie-player 
+                    src="https://lottie.host/38202b3d-5184-43bf-b09d-bf12040760ff/tTM7lKQEcq.lottie" 
+                    background="transparent" 
+                    speed="2.5" 
+                    style="width: 40px; height: 40px;" 
+                    loop autoplay>
+                </dotlottie-player>
+                <p class="message-text">Just a sec...</p>
+            </div>
         `, "bot-message", "loading");
 
         chatsContainer.appendChild(botMsgDiv);
@@ -169,6 +261,7 @@ const handleFormSubmit = (e) => {
         generateResponse(botMsgDiv);
     }, 600);
 };
+
 
 // ✅ Reset UI after bot response
 document.querySelector("#stop-response-btn").addEventListener("click", () => {
@@ -188,7 +281,7 @@ themeToggleBtn.addEventListener("click", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Show popup only on page refresh
+    // Show popup only on first visit
     const popup = document.getElementById("info-popup");
     const closePopup = document.getElementById("close-popup");
 
@@ -200,4 +293,13 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.style.display = "none"; // Hide popup when clicked
         localStorage.setItem("popupShown", "true"); // Store in localStorage
     });
+
+    // Prevent background scrolling when popup is open
+    popup.addEventListener("click", (event) => {
+        if (event.target === popup) {
+            popup.style.display = "none";
+            localStorage.setItem("popupShown", "true");
+        }
+    });
 });
+
